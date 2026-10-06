@@ -60,3 +60,25 @@ def test_missing_controls_is_an_error(tmp_path):
     df.to_csv(pm, index=False)
     with pytest.raises(ValueError, match="control"):
         main(["run", str(cfg)])
+
+
+def test_one_file_script(tmp_path):
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("ci", Path(__file__).parent.parent / "classify_incucyte.py")
+    ci = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ci)
+    assert ci.parse_wells("B2-D2, E3") == ["B02", "C02", "D02", "E03"]
+    assert ci.parse_wells("B3:C4") == ["B03", "B04", "C03", "C04"]
+    assert ci.clean_path("'/a/my folder'") == Path("/a/my folder") == ci.clean_path("/a/my\\ folder")
+    plate = make_plate(tmp_path, "P1")
+    out = tmp_path / "res"
+    ci.main(["--images", str(plate / "images"), "--untreated", "B2-G2", "--senescent", "B3-G3", "--dead", "B4-G4",
+             "--out", str(out), "--fast", "--cell-line", "LineA"])
+    T = pd.read_csv(out / "percent_per_well.csv")
+    assert T.loc[T["well"] == "B04", "pct_dead"].item() > 50
+    # reuse the model on the same images, as for a new plate
+    out2 = tmp_path / "res2"
+    ci.main(["--images", str(plate / "images"), "--untreated", "B2-G2", "--model", str(out / "model.joblib"),
+             "--out", str(out2), "--fast"])
+    assert (out2 / "percent_per_well.csv").exists()
