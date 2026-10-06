@@ -106,7 +106,3 @@ pip install -e ".[dev]" && pytest -q
 
 The tests generate synthetic two-cell-line plates (with and without marker channels) and run the full pipeline with
 the lightweight backends.
-
-## Licence
-
-MIT
