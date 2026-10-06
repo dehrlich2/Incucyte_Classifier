@@ -1,4 +1,4 @@
-# Incucyte_Classifier
+# Incucyte Classifier
 
 Per-cell **alive / senescent / dead** classification of Incucyte live-cell images, for any adherent cell line.
 It reports the percentage of cells in each state for every well, alongside the cell count relative to untreated controls.
