@@ -50,7 +50,7 @@ def assign_labels(cells: pd.DataFrame, cfg: dict) -> pd.Series:
             ref = cells[cells["control"]].groupby(NORM_KEYS)[col].quantile(q).rename("thr")
             thr = cells[NORM_KEYS].join(ref, on=NORM_KEYS)["thr"]
         pos[cls] = cells[col] > thr
-    has = cells[[f"{lab[c]['channel']}_mean" for c in pos]].notna().all(1)
+    has = cells[[f"{lab[c]['channel']}_mean" for c in pos]].notna().all(axis=1)
     out[has] = "alive"
     if "senescent" in pos:
         out[has & pos["senescent"]] = "senescent"
@@ -67,7 +67,7 @@ def feature_matrix(cells: pd.DataFrame, use_embedding=True) -> tuple[np.ndarray,
     cols = [c for c in LOG_FEATS + SHAPE_FEATS if c in cells]
     if use_embedding:
         cols += [c for c in cells.columns if c.startswith("emb_")]
-    X = cells[cols].to_numpy(np.float64)
+    X = cells[cols].to_numpy(np.float64, copy=True)  # pandas >= 3 returns read-only views
     li = [cols.index(c) for c in LOG_FEATS if c in cols]
     X[:, li] = np.log(np.clip(X[:, li], 1e-3, None))
     ctrl = cells["control"].to_numpy(bool)

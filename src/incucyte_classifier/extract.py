@@ -23,6 +23,15 @@ MORPH = ["area", "perimeter", "eccentricity", "solidity", "extent", "major_axis_
 
 
 # ---------------------------------------------------------------- segmentation
+def _drop_small(labels: np.ndarray, min_area: int) -> np.ndarray:
+    """Zero out labelled objects smaller than min_area (version-stable replacement for remove_small_objects)."""
+    labels = np.array(labels, copy=True)
+    small = np.bincount(labels.ravel()) < min_area
+    small[0] = False
+    labels[small[labels]] = 0
+    return labels
+
+
 class ThresholdSegmenter:
     """Dependency-free fallback: local-contrast threshold + watershed. Good enough for tests and sparse wells."""
 
@@ -32,7 +41,8 @@ class ThresholdSegmenter:
     def __call__(self, img: np.ndarray) -> np.ndarray:
         contrast = ndi.gaussian_filter(np.abs(img - ndi.gaussian_filter(img, 15)), 2)
         fg = contrast > filters.threshold_otsu(contrast)
-        fg = morphology.remove_small_objects(ndi.binary_fill_holes(morphology.binary_closing(fg, morphology.disk(2))), self.min_area)
+        fg = ndi.binary_fill_holes(ndi.binary_closing(fg, morphology.disk(2)))
+        fg = _drop_small(measure.label(fg), self.min_area) > 0
         dist = ndi.distance_transform_edt(fg)
         peaks = measure.label(morphology.h_maxima(ndi.gaussian_filter(dist, 2), 2))
         return segmentation.watershed(-dist, peaks, mask=fg)
@@ -54,7 +64,7 @@ class CellposeSegmenter:
         if not self.cp4:
             kw["channels"] = [0, 0]
         m = self.model.eval(img.copy(), **kw)[0]
-        return morphology.remove_small_objects(m, self.min_area)
+        return _drop_small(m, self.min_area)
 
 
 # ---------------------------------------------------------------- embedding
