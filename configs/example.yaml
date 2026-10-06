@@ -1,0 +1,43 @@
+# incucyte-classifier config. Paths are relative to this file.
+plates:
+  - name: plate1_A549
+    images: ../data/plate1          # Incucyte export folder; channels in sub-folders (Phase/, Green/, Red/) or file-name tokens
+    platemap: ../examples/platemap_example.csv
+  # - name: plate2_HepG2
+  #   images: ../data/plate2
+  #   platemap: ../data/plate2_platemap.csv
+
+work_dir: ../outputs
+phase_channel: Phase                # channel used for segmentation and classification
+timepoints: all                     # all | last | [24.0, 48.0]  (hours since the first scan)
+
+segmentation:
+  backend: cellpose                 # cellpose (Cellpose-SAM, needs the [deep] extra) | threshold
+  model: cpsam
+  diameter_px: null
+  min_area_px: 40
+
+embedding:
+  backend: dinov2                   # dinov2 (needs the [deep] extra) | none (morphology features only)
+  model: facebook/dinov2-base
+  crop_px: 96                       # crop around each cell; ~2x the diameter of a spread cell at 10x
+  input_px: 224
+  batch_size: 128
+  max_cells_per_field: 300          # random subsample per field for speed; counts use every cell
+
+# Where training labels come from:
+#   platemap - the `label` column of reference wells (alive / senescent / dead). The model then learns
+#              "looks like my senescence-inducing / killing treatment", not senescence or apoptosis itself.
+#   marker   - per-cell fluorescence: a cell above the threshold for the death marker is dead, else above
+#              the senescence marker is senescent, else alive. Thresholds default to a percentile of the
+#              untreated control cells of the same plate, cell line and time point.
+labels:
+  mode: platemap
+  # mode: marker
+  # dead:      {channel: Red,   control_percentile: 99}   # e.g. Cytotox Red, or caspase-3/7 Green for apoptosis
+  # senescent: {channel: Green, control_percentile: 99}   # e.g. live-cell SA-beta-gal (SPiDER-betaGal) or a p21 reporter
+
+classifier:
+  n_pcs: 50
+  C: 0.1
+  cv_group: row                     # held-out unit for validation: row | column | well | plate

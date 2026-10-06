@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "incucyte-classifier"
+version = "0.1.0"
+description = "Per-cell alive / senescent / dead classification of Incucyte live-cell images, trainable on any cell type"
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [{ name = "Daniel Ehrlich" }]
+requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+    "pandas",
+    "pyarrow",
+    "pyyaml",
+    "scikit-image",
+    "scikit-learn",
+    "scipy",
+    "tifffile",
+    "pillow",
+    "matplotlib",
+    "joblib",
+]
+
+[project.optional-dependencies]
+# Cellpose-SAM segmentation and DINOv2 embeddings; without these the package falls back to threshold
+# segmentation and hand-crafted morphology features (fine for tests, weaker on real data).
+deep = ["torch", "cellpose>=4", "transformers"]
+dev = ["pytest"]
+
+[project.scripts]
+incucyte-classifier = "incucyte_classifier.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

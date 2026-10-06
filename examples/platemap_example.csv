@@ -1,0 +1,9 @@
+well,cell_line,treatment,dose_uM,label,control
+B2,A549,Untreated,,alive,TRUE
+C2,A549,Untreated,,alive,TRUE
+B3,A549,Hippuristanol,10,senescent,FALSE
+C3,A549,Hippuristanol,2.5,senescent,FALSE
+D3,A549,Hippuristanol,0.16,,FALSE
+B8,A549,Staurosporine,1,dead,FALSE
+C8,A549,Staurosporine,1,dead,FALSE
+D8,A549,MyCompound,5,,FALSE
